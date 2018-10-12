@@ -2,6 +2,8 @@ import random
 import time
 from enum import Enum
 import RPi.GPIO as GPIO
+from neopixel import *
+import argparse
 
 LED_COUNT = 40  # Number of LED pixels.
 LED_PIN = 18  # GPIO pin connected to the pixels
@@ -9,10 +11,16 @@ LED_FREQ_HZ = 800000  # LED signal frequency in hertz
 LED_DMA = 5  # DMA channel to use for generating signal
 LED_BRIGHTNESS = 155  # Set to 0 for darkest and 255 for brightest
 LED_INVERT = False  # True to invert the signal (when using NPN transistor level shift)
+LED_CHANNEL    = 0
+GPIO.setmode(GPIO.BCM) 
 
 GPIO.setup(17,GPIO.IN, pull_up_down=GPIO.PUD_UP)
 GPIO.setup(27,GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.setup(23,GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
+strip.begin()
+
+#__init__(self, 40, 18, freq_hz=800000, dma=10, invert=False)
 
 class Status(Enum):
     START = 0
@@ -68,32 +76,36 @@ class Game:
         return speed
     
     def level_move(self):
+        
         for i in range(20):            
             head_pos = self.current_position[-1] 
             head_pos += 1
             move_position = head_pos
+            self.setPixelColorRGB(self, current_pointer_pos, 255, 0 , 0)
+            strip.show()
             self.current_position.append(move_position)
-            setPixelColor(self, current_position, green)
+            self.setPixelColorRGB(self, current_position, 0, 255, 0)
+            strip.show()
+            
             print(self.current_position)
             #light_strip.setPixelColorRGB(move_position, x, x, x)
             speed = self.set_speed(current_level)
             time.sleep(speed)
             if button_pressed is ButtonPress.REACT:
                 self.compare(self.current_pointer_pos, self.current_position)
-                setPixelColorRGB(self , row_one , 0 , 0 , 0)
+                self.setPixelColorRGB(self , row_one , 0 , 0 , 0)
+                strip.show()
                 break
                 
+
+
 game = Game()
 current_level = 1
 
-button_state_s = GPIO.input(17)
-if button_state_s is True:
+if GPIO.input(17) == False:
     button_pressed = ButtonPress.START
 
-button_state_r = GPIO.input(27)
-if button_state_r is True:
+if GPIO.input(27) == False:
     button_pressed = ButtonPress.REACT
-
-
 
 game.level_move()
